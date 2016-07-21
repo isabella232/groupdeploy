@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -48,18 +50,30 @@ func (oe *opError) Error() string {
 	return "operation error: \n" + string(b)
 }
 
+func extractLast(u string) string {
+	if !strings.HasPrefix(u, "https://") {
+		return u
+	}
+	raw, err := url.Parse(u)
+	if err != nil {
+		panic("invalid url:" + u)
+	}
+	return path.Base(raw.Path)
+}
 func WaitOp(c *compute.Service, op *compute.Operation, state string) error {
 	var err error
 	for op.Status != "DONE" {
 		time.Sleep(1 * time.Second)
 		switch {
 		case op.Zone != "":
-			op, err = c.ZoneOperations.Get(project, op.Zone, op.Name).Do()
+			zone := extractLast(op.Zone)
+			op, err = c.ZoneOperations.Get(project, zone, op.Name).Do()
 			if err != nil {
 				return err
 			}
 		case op.Region != "":
-			op, err = c.RegionOperations.Get(project, op.Region, op.Name).Do()
+			region := extractLast(op.Region)
+			op, err = c.RegionOperations.Get(project, region, op.Name).Do()
 			if err != nil {
 				return err
 			}
