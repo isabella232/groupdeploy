@@ -17,4 +17,4 @@ get:
 	go get google.golang.org/api/compute/v1
 
 build:
-	go build
+	go build -o groupdeploy main.go
